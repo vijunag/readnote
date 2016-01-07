@@ -59,18 +59,75 @@ typedef struct Elf_ctxt {
 	uint8_t is32; /* is it 32 bit elf ? */
 } Elf_ctxt;
 
-int elf_read_note_section(Elf_ctxt *elf, prstatus_t *prs,
-		                      prpsinfo_t *pri)
+static void* Elf_find_phdr_by_type(Elf_ctxt *elf, int type, int idx)
 {
+	 void *res = NULL;
+	 int i = 0;
+	 int found = 0;
+/*
+ * Evil macro substition.
+ * not meant for anything else.
+ */
+#define ITER_AND_GET_ELF_PHDR(elf_type, phdr_type, e, _p) \
+	  elf_type* _e = (e);\
+	 _p = (phdr_type *)((char *)_e + _e->e_phoff); \
+	 for (i = idx; i < _e->e_phnum; ++i) { \
+		   if (type == _p[i].p_type) { \
+				 found = 1; \
+		     break; \
+			 } \
+	 }
+
+	 if (elf->is32) {
+		 Elf32_Phdr *p = NULL;
+		 ITER_AND_GET_ELF_PHDR(Elf32_Ehdr, Elf32_Phdr, elf->mmap_addr, p);
+		 res = found ? p : NULL;
+	 } else {
+		 Elf64_Phdr *p = NULL;
+		 ITER_AND_GET_ELF_PHDR(Elf64_Ehdr, Elf64_Phdr, elf->mmap_addr, p);
+		 res = found ? p : NULL;
+	 }
+	 return res;
+#undef ITER_AND_GET_ELF_PHDR
+}
+
+int elf_read_note_section(Elf_ctxt *elf)
+{
+	 char *v = NULL;
+	 void *phdr = Elf_find_phdr_by_type(elf, PT_NOTE, 0);
+
+/* haha, iterator for note section ;) */
+#define HIT_THE_RIGHT_NOTE() \
+	 for (v = (char *)elf->mmap_addr + p->p_offset; \
+			  v < (char *)elf->mmap_addr + p->p_offset + p->p_filesz; \
+				v += sizeof(*n) + n->n_namesz + n->n_descsz)
+
+	 if (elf->is32) {
+		 Elf32_Phdr *p = (Elf32_Phdr*) phdr;
+		 Elf32_Nhdr *n = NULL;
+		 HIT_THE_RIGHT_NOTE() {
+			 n = (Elf32_Nhdr *)v;
+		 }
+	 } else {
+		 Elf64_Phdr *p = (Elf64_Phdr*) phdr;
+		 Elf64_Nhdr *n = NULL;
+		 HIT_THE_RIGHT_NOTE() {
+			 n = (Elf64_Nhdr *)v;
+			 switch(n->n_type) {
+			  case NT_PRSTATUS: fprintf(stderr, "Note NT_PRSTATUS found\n"); break;
+			  case NT_PRPSINFO: fprintf(stderr, "Note NT_PRPSINFO found\n"); break;
+			  case NT_SIGINFO: fprintf(stderr, "Note NT_SIGINFO found\n"); break;
+			  default: fprintf(stderr, "Note: unknown found with type = %d\n", n->n_type); break;
+			 }
+		 }
+	 }
 }
 
 int main()
 {
 	Elf_ctxt elf = {0};
-	const char *filename = "core";
+	const char *filename = "test/core";
 	struct stat st;
-	prstatus_t prs = {0};
-	prpsinfo_t pri = {0};
 
 	printf("sizeof(Elf32_Ehdr) = %d, sizeof(Elf64_Ehdr) = %d\n",
 			sizeof(elf.elf32_ehdr), sizeof(elf.elf64_ehdr));
@@ -105,7 +162,7 @@ int main()
 		LOGERR_EXIT("File mapping error\n");
 	}
 
-	elf_read_note_section(&elf, &prs, &pri);
+	elf_read_note_section(&elf);
 	return 0;
 }
 
