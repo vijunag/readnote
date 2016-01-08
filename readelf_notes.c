@@ -17,6 +17,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define ALIGN_ADDR(addr, boundary) \
+  ((((unsigned long) (addr) + (boundary) - 1) >= (unsigned long) (addr))      \
+	    ? (((unsigned long) (addr) + ((boundary) - 1)) & ~ (unsigned long) ((boundary)-1)) \
+			   : ~ (unsigned long) 0)
+
 /* may be defined in BSD kernel */
 #ifndef IS_ELF
 #define IS_ELF(ehdr)  ((ehdr).e_ident[EI_MAG0] == ELFMAG0 && \
@@ -99,8 +104,7 @@ int elf_read_note_section(Elf_ctxt *elf)
 /* haha, iterator for note section ;) */
 #define HIT_THE_RIGHT_NOTE() \
 	 for (v = (char *)elf->mmap_addr + p->p_offset; \
-			  v < (char *)elf->mmap_addr + p->p_offset + p->p_filesz; \
-				v += sizeof(*n) + n->n_namesz + n->n_descsz)
+			  v < (char *)elf->mmap_addr + p->p_offset + p->p_filesz;)
 
 	 if (elf->is32) {
 		 Elf32_Phdr *p = (Elf32_Phdr*) phdr;
@@ -111,14 +115,31 @@ int elf_read_note_section(Elf_ctxt *elf)
 	 } else {
 		 Elf64_Phdr *p = (Elf64_Phdr*) phdr;
 		 Elf64_Nhdr *n = NULL;
+		 char *name = NULL;
 		 HIT_THE_RIGHT_NOTE() {
 			 n = (Elf64_Nhdr *)v;
+			 v += sizeof(*n); /*get the name data*/
+			 name = v;
+			 v += ALIGN_ADDR(n->n_namesz, 4);
 			 switch(n->n_type) {
-			  case NT_PRSTATUS: fprintf(stderr, "Note NT_PRSTATUS found\n"); break;
-			  case NT_PRPSINFO: fprintf(stderr, "Note NT_PRPSINFO found\n"); break;
-			  case NT_SIGINFO: fprintf(stderr, "Note NT_SIGINFO found\n"); break;
-			  default: fprintf(stderr, "Note: unknown found with type = %d\n", n->n_type); break;
+			  case NT_PRSTATUS: {
+					fprintf(stderr, "Note(%s): NT_PRSTATUS found\n", name);
+					break;
+				}
+			  case NT_PRPSINFO: {
+					fprintf(stderr, "Note(%s): NT_PRPSINFO found\n", name);
+					break;
+				}
+			  case NT_SIGINFO: {
+					fprintf(stderr, "Note(%s): NT_SIGINFO found\n", name);
+					break;
+				}
+			  default: {
+				  fprintf(stderr, "Note: unknown found with type = 0x%x\n", n->n_type);
+					break;
+				}
 			 }
+			 v += ALIGN_ADDR(n->n_descsz, 4);
 		 }
 	 }
 }
