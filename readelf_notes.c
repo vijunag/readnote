@@ -3,33 +3,24 @@
  * Date: 06/01/2015
  */
 
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <unistd.h>
 #include <fcntl.h>
 #include <elf.h>
-
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define ALIGN_ADDR(addr, boundary) \
-  ((((unsigned long) (addr) + (boundary) - 1) >= (unsigned long) (addr))      \
-	    ? (((unsigned long) (addr) + ((boundary) - 1)) & ~ (unsigned long) ((boundary)-1)) \
-			   : ~ (unsigned long) 0)
+#include "readelf.h"
 
 /* may be defined in BSD kernel */
-#ifndef IS_ELF
-#define IS_ELF(ehdr)  ((ehdr).e_ident[EI_MAG0] == ELFMAG0 && \
-       (ehdr).e_ident[EI_MAG1] == ELFMAG1 && \
-       (ehdr).e_ident[EI_MAG2] == ELFMAG2 && \
-       (ehdr).e_ident[EI_MAG3] == ELFMAG3)
-#endif /*IS_ELF*/
-
 #define SYSCALL_EXIT_ON_ERR(syscall)                          \
 ({                                                            \
  int ret = syscall;                                           \
@@ -124,6 +115,7 @@ int elf_read_note_section(Elf_ctxt *elf)
 			 switch(n->n_type) {
 			  case NT_PRSTATUS: {
 					fprintf(stderr, "Note(%s): NT_PRSTATUS found\n", name);
+					//assert(sizeof(elf_prstatus_t) == n->n_descsz);
 					break;
 				}
 			  case NT_PRPSINFO: {
@@ -132,6 +124,14 @@ int elf_read_note_section(Elf_ctxt *elf)
 				}
 			  case NT_SIGINFO: {
 					fprintf(stderr, "Note(%s): NT_SIGINFO found\n", name);
+					break;
+				}
+				case NT_FILE: {
+					fprintf(stderr, "Note(%s): NT_FILE found\n", name);
+					break;
+				}
+				case NT_FPREGSET: {
+					fprintf(stderr, "Note(%s): NT_FILE found\n", name);
 					break;
 				}
 			  default: {
