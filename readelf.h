@@ -18,62 +18,41 @@
        (ehdr).e_ident[EI_MAG3] == ELFMAG3)
 #endif /*IS_ELF*/
 
+/* Number of each register in the `gregset_t' array.  */
+# define R15	0
+# define R14	1
+# define R13	2
+# define R12	3
+# define RBP	4
+# define RBX	5
+# define R11	6
+# define R10	7
+# define R9	8
+# define R8	9
+# define RAX	10
+# define RCX	11
+# define RDX	12
+# define RSI	13
+# define RDI	14
+# define ORIG_RAX 15
+# define RIP	16
+# define CS	17
+# define EFLAGS	18
+# define RSP	19
+# define SS	20
+# define FS_BASE 21
+# define GS_BASE 22
+# define DS	23
+# define ES	24
+# define FS	25
+# define GS	26
+
 /* Type for general register.  */
 __extension__ typedef long long int greg64_t;
 /* Number of general registers.  */
 #define NGREG64	27
 /* Container for all general registers.  */
 typedef greg64_t gregset64_t[NGREG64];
-/* Number of each register in the `gregset_t' array.  */
-enum
-{
-  REG_R8 = 0,
-# define REG_R8		REG_R8
-  REG_R9,
-# define REG_R9		REG_R9
-  REG_R10,
-# define REG_R10	REG_R10
-  REG_R11,
-# define REG_R11	REG_R11
-  REG_R12,
-# define REG_R12	REG_R12
-  REG_R13,
-# define REG_R13	REG_R13
-  REG_R14,
-# define REG_R14	REG_R14
-  REG_R15,
-# define REG_R15	REG_R15
-  REG_RDI,
-# define REG_RDI	REG_RDI
-  REG_RSI,
-# define REG_RSI	REG_RSI
-  REG_RBP,
-# define REG_RBP	REG_RBP
-  REG_RBX,
-# define REG_RBX	REG_RBX
-  REG_RDX,
-# define REG_RDX	REG_RDX
-  REG_RAX,
-# define REG_RAX	REG_RAX
-  REG_RCX,
-# define REG_RCX	REG_RCX
-  REG_RSP,
-# define REG_RSP	REG_RSP
-  REG_RIP,
-# define REG_RIP	REG_RIP
-  REG_EFL,
-# define REG_EFL	REG_EFL
-  REG_CSGSFS,		/* Actually short cs, gs, fs, __pad0.  */
-# define REG_CSGSFS	REG_CSGSFS
-  REG_ERR,
-# define REG_ERR	REG_ERR
-  REG_TRAPNO,
-# define REG_TRAPNO	REG_TRAPNO
-  REG_OLDMASK,
-# define REG_OLDMASK	REG_OLDMASK
-  REG_CR2
-# define REG_CR2	REG_CR2
-};
 
 typedef int pid_t;
 /*

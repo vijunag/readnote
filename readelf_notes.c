@@ -87,6 +87,54 @@ static void* Elf_find_phdr_by_type(Elf_ctxt *elf, int type, int idx)
 #undef ITER_AND_GET_ELF_PHDR
 }
 
+static void print_prstatus_info(elf64_prstatus_t *prstatus)
+{
+	int i = 0;
+  struct rorder {
+		int idx;
+		const char *reg_name;
+	};
+	static struct rorder reg_print_order[] = { \
+		{RAX, "rax"},
+		{RBX, "rbx"},
+		{RCX, "rcx"},
+		{RDX, "rdx"},
+		{RSI, "rsi"},
+		{RDI, "rdi"},
+		{RBP, "rbp"},
+		{RSP, "rsp"},
+		{R8,  "r8"},
+		{R9,  "r9"},
+		{R10, "r10"},
+		{R11, "r11"},
+		{R12, "r12"},
+		{R13, "r13"},
+		{R14, "r14"},
+		{R15, "r15"},
+		{RIP, "rip"},
+	  {EFLAGS, "eflags"},
+		{CS, "cs"},
+		{SS, "ss"},
+		{DS, "ds"},
+		{ES, "es"},
+		{FS, "fs"},
+		{GS, "gs"},
+	 };
+
+	for (i = 0; i < (sizeof(reg_print_order)/sizeof(reg_print_order[0])); ++i) {
+		uint64_t idx = reg_print_order[i].idx;
+		if (EFLAGS == idx) {
+			fprintf(stderr, "%s\t\t0x%x%10s[ PF ZF IF RF ]\n",
+					reg_print_order[i].reg_name,
+					prstatus->pr_reg[idx], " ");
+			continue;
+		}
+		fprintf(stderr, "%s\t\t0x%llx%20lld\n",
+				reg_print_order[i].reg_name,
+				prstatus->pr_reg[idx], prstatus->pr_reg[idx]);
+	}
+}
+
 int elf_read_note_section(Elf_ctxt *elf)
 {
 	 char *v = NULL;
@@ -115,19 +163,20 @@ int elf_read_note_section(Elf_ctxt *elf)
 			 switch(n->n_type) {
 			  case NT_PRSTATUS: {
 					elf64_prstatus_t *prstatus = (elf64_prstatus_t *)v;
-					fprintf(stderr, "Note(%s): NT_PRSTATUS found\n", name);
+					fprintf(stderr, "%s:%10s NT_PRSTATUS\n", name, " ");
+					print_prstatus_info(prstatus);
 					break;
 				}
 			  case NT_PRPSINFO: {
-					fprintf(stderr, "Note(%s): NT_PRPSINFO found\n", name);
+					fprintf(stderr, "%s: NT_PRPSINFO\n", name);
 					break;
 				}
 			  case NT_SIGINFO: {
-					fprintf(stderr, "Note(%s): NT_SIGINFO found\n", name);
+					fprintf(stderr, "%s: NT_SIGINFO\n", name);
 					break;
 				}
 				case NT_FILE: {
-					fprintf(stderr, "Note(%s): NT_FILE found\n", name);
+					fprintf(stderr, "%s: NT_FILE\n", name);
 					break;
 				}
 				case NT_FPREGSET: {
