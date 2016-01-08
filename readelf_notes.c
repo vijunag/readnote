@@ -114,8 +114,8 @@ int elf_read_note_section(Elf_ctxt *elf)
 			 v += ALIGN_ADDR(n->n_namesz, 4);
 			 switch(n->n_type) {
 			  case NT_PRSTATUS: {
+					elf64_prstatus_t *prstatus = (elf64_prstatus_t *)v;
 					fprintf(stderr, "Note(%s): NT_PRSTATUS found\n", name);
-					//assert(sizeof(elf_prstatus_t) == n->n_descsz);
 					break;
 				}
 			  case NT_PRPSINFO: {
@@ -131,7 +131,11 @@ int elf_read_note_section(Elf_ctxt *elf)
 					break;
 				}
 				case NT_FPREGSET: {
-					fprintf(stderr, "Note(%s): NT_FILE found\n", name);
+					fprintf(stderr, "Note(%s): NT_FPREGSET found\n", name);
+					break;
+				}
+				case NT_AUXV: {
+					fprintf(stderr, "Note(%s): NT_AUXV found\n", name);
 					break;
 				}
 			  default: {
@@ -149,9 +153,6 @@ int main()
 	Elf_ctxt elf = {0};
 	const char *filename = "test/core";
 	struct stat st;
-
-	printf("sizeof(Elf32_Ehdr) = %d, sizeof(Elf64_Ehdr) = %d\n",
-			sizeof(elf.elf32_ehdr), sizeof(elf.elf64_ehdr));
 
 	/* open the core file */
 	int fd = SYSCALL_EXIT_ON_ERR(open(filename, O_RDONLY));
