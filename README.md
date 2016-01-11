@@ -1,5 +1,5 @@
 # readelf
 
-Readelf - An utility to dissect the NOTE section in the core file.
+An utility to dissect the NOTE sections in the linux core file.
 ==================================================================
 

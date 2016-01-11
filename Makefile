@@ -1,12 +1,12 @@
 
-all: a.out
+all: readelf
 
-a.out: readelf_notes.c
-	gcc readelf_notes.c -g -O0
-
-main: test/main.c
+readelf: readelf_notes.c
 	gcc $^ -g -O0 -o $@
 
-clean: main
+test/main: test/main.c
+	gcc $^ -g -O0 -o $@
+
+clean: test/main readelf
 	rm -rf $^
 

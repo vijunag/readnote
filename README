@@ -1,0 +1,12 @@
+
+* A small utility to dissect the note section in the linux core file.
+
+* There is an example core/executable in test directory.
+
+* Program can be invoked as "./readelf" for now.
+
+TODO:
+ *Parameterize arguments.
+ *Support for parsing other note sections as well(SIGINFO, FILE_MAP, AUXV)
+ *Multi architecture support.
+ *Decode stacktrace as well.
