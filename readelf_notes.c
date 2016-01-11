@@ -194,11 +194,11 @@ int elf_read_note_section(Elf_ctxt *elf)
 					break;
 				}
 				case NT_FPREGSET: {
-					fprintf(stderr, "Note(%s): NT_FPREGSET found\n", name);
+					fprintf(stderr, "%s: NT_FPREGSET\n", name);
 					break;
 				}
 				case NT_AUXV: {
-					fprintf(stderr, "Note(%s): NT_AUXV found\n", name);
+					fprintf(stderr, "%s: NT_AUXV found\n", name);
 					break;
 				}
 			  default: {
