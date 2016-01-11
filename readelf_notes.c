@@ -14,13 +14,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <elf.h>
+#include <signal.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "readelf.h"
 
-/* may be defined in BSD kernel */
 #define SYSCALL_EXIT_ON_ERR(syscall)                          \
 ({                                                            \
  int ret = syscall;                                           \
@@ -121,6 +121,18 @@ static void print_prstatus_info(elf64_prstatus_t *prstatus)
 		{GS, "gs"},
 	 };
 
+  fprintf(stderr, "Program terminated with Signal");
+  switch (prstatus->pr_sinfo.si_signo) {
+	 case SIGSEGV: { fprintf(stderr, " SIGSEGV, Segmentation fault.\n"); break; }
+	 case SIGABRT: { fprintf(stderr, " SIGABRT, Abort signal.\n"); break; }
+	 case SIGBUS: { fprintf(stderr,  " SIGBUS,  Bus error.\n"); break; }
+	 case SIGKILL: { fprintf(stderr, " SIGKILL, Killed.\n"); break; }
+	 case SIGINT: { fprintf(stderr,  " SIGINT,  Terminated.\n"); break; }
+	 default: { fprintf(stderr, " Unknown signal number %d\n", prstatus->pr_sinfo.si_signo); break; }
+	}
+	fprintf(stderr, "Signal si_code: %d\n", prstatus->pr_sinfo.si_code);
+	fprintf(stderr, "Last errno before crash: %d(%s)\n", errno, strerror(errno));
+	fprintf(stderr, "%s:%10s NT_PRSTATUS\n", "CORE", " ");
 	for (i = 0; i < (sizeof(reg_print_order)/sizeof(reg_print_order[0])); ++i) {
 		uint64_t idx = reg_print_order[i].idx;
 		if (EFLAGS == idx) {
@@ -162,8 +174,10 @@ int elf_read_note_section(Elf_ctxt *elf)
 			 v += ALIGN_ADDR(n->n_namesz, 4);
 			 switch(n->n_type) {
 			  case NT_PRSTATUS: {
+					/* Unsupported elf64_prstatus_t */
+					if (sizeof(elf64_prstatus_t) != n->n_descsz)
+						  continue;
 					elf64_prstatus_t *prstatus = (elf64_prstatus_t *)v;
-					fprintf(stderr, "%s:%10s NT_PRSTATUS\n", name, " ");
 					print_prstatus_info(prstatus);
 					break;
 				}

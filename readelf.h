@@ -67,7 +67,7 @@ typedef struct elf_int_sinfo {
 } elf_int_sinfo;
 
 typedef struct elf64_prstatus {
-	elf_int_sinfo pr_info;
+	elf_int_sinfo pr_sinfo;
 	short pr_cursig;
 	unsigned long pr_sigpend;
 	unsigned long pr_sighold;
