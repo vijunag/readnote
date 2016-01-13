@@ -147,6 +147,12 @@ static void print_prstatus_info(elf64_prstatus_t *prstatus)
 	}
 }
 
+static void print_prpsinfo(elf64_prpsinfo_t *prpsinfo)
+{
+	  fprintf(stderr, "Program Name: %s, Args: %s, State: %d, Nice Value: %d\n",
+			prpsinfo->pr_fname, prpsinfo->pr_psargs, prpsinfo->pr_state, prpsinfo->pr_nice);
+}
+
 int elf_read_note_section(Elf_ctxt *elf)
 {
 	 char *v = NULL;
@@ -182,6 +188,10 @@ int elf_read_note_section(Elf_ctxt *elf)
 					break;
 				}
 			  case NT_PRPSINFO: {
+					if (sizeof(elf64_prpsinfo_t) != n->n_descsz)
+						  continue;
+          elf64_prpsinfo_t *prpsinfo = (elf64_prpsinfo_t *)v;
+					print_prpsinfo(prpsinfo);
 					fprintf(stderr, "%s: NT_PRPSINFO\n", name);
 					break;
 				}

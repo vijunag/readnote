@@ -86,5 +86,21 @@ typedef struct elf64_prstatus {
 	int pr_fpvalid;
 } elf64_prstatus_t;
 
+typedef struct elf64_prpsinfo {
+    char pr_state;      /* Numeric process state.  */
+    char pr_sname;      /* Char for pr_state.  */
+    char pr_zomb;     /* Zombie.  */
+    char pr_nice;     /* Nice val.  */
+    char pr_flag[8];      /* Flags.  */
+    char gap[4];
+    char pr_uid[4];
+    char pr_gid[4];
+    char pr_pid[4];
+    char pr_ppid[4];
+    char pr_pgrp[4];
+    char pr_sid[4];
+    char pr_fname[16];      /* Filename of executable.  */
+    char pr_psargs[80];     /* Initial part of arg list.  */
+} elf64_prpsinfo_t;
 #endif /*__READELF_H_ */
 

@@ -7,6 +7,7 @@
 
 TODO:
  *Parameterize arguments.
+ *Add support for 32 bit elf as well.
  *Support for parsing other note sections as well(SIGINFO, FILE_MAP, AUXV)
  *Multi architecture support.
  *Decode stacktrace as well.
