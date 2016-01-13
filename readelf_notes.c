@@ -130,8 +130,6 @@ static void print_prstatus_info(elf64_prstatus_t *prstatus)
 	 case SIGINT: { fprintf(stderr,  " SIGINT,  Terminated.\n"); break; }
 	 default: { fprintf(stderr, " Unknown signal number %d\n", prstatus->pr_sinfo.si_signo); break; }
 	}
-	fprintf(stderr, "Signal si_code: %d\n", prstatus->pr_sinfo.si_code);
-	fprintf(stderr, "Last errno before crash: %d(%s)\n", errno, strerror(errno));
 	fprintf(stderr, "%s:%10s NT_PRSTATUS\n", "CORE", " ");
 	for (i = 0; i < (sizeof(reg_print_order)/sizeof(reg_print_order[0])); ++i) {
 		uint64_t idx = reg_print_order[i].idx;
@@ -166,13 +164,12 @@ static void print_sinfo(siginfo_t *sinfo)
 	 default: { fprintf(stderr, " Unknown signal number %d\n", sinfo->si_signo); break; }
 	}
 
-	fprintf(stderr, "si_code = %d, Killer pid = %d", sinfo->si_code, sinfo->si_pid);
+	fprintf(stderr, "errno=%d, si_code=%d, Killer pid=%d", sinfo->si_errno, sinfo->si_code, sinfo->si_pid);
 	if (SIGSEGV == sinfo->si_signo) {
 		fprintf(stderr, ", si_faulty = %p\n", sinfo->si_addr);
 	} else {
 		fprintf(stderr, "\n");
 	}
-
 }
 
 int elf_read_note_section(Elf_ctxt *elf)
@@ -225,15 +222,15 @@ int elf_read_note_section(Elf_ctxt *elf)
 					break;
 				}
 				case NT_FILE: {
-					fprintf(stderr, "%s: NT_FILE\n", name);
+					fprintf(stderr, "\n%s: NT_FILE\n", name);
 					break;
 				}
 				case NT_FPREGSET: {
-					fprintf(stderr, "%s: NT_FPREGSET\n", name);
+					fprintf(stderr, "\n%s: NT_FPREGSET\n", name);
 					break;
 				}
 				case NT_AUXV: {
-					fprintf(stderr, "%s: NT_AUXV found\n", name);
+					fprintf(stderr, "\n%s: NT_AUXV found\n", name);
 					break;
 				}
 			  default: {
