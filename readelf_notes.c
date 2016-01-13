@@ -18,7 +18,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <bits/siginfo.h>
 #include "readelf.h"
 
 #define SYSCALL_EXIT_ON_ERR(syscall)                          \
@@ -149,8 +149,30 @@ static void print_prstatus_info(elf64_prstatus_t *prstatus)
 
 static void print_prpsinfo(elf64_prpsinfo_t *prpsinfo)
 {
-	  fprintf(stderr, "Program Name: %s, Args: %s, State: %d, Nice Value: %d\n",
+	  fprintf(stderr, "\nCORE: NT_PRPSINFO\n");
+	  fprintf(stderr, "Program Name: %s, Args: %s\nState: %d, Nice Value: %d\n",
 			prpsinfo->pr_fname, prpsinfo->pr_psargs, prpsinfo->pr_state, prpsinfo->pr_nice);
+}
+
+static void print_sinfo(siginfo_t *sinfo)
+{
+	fprintf(stderr, "Signal: ");
+  switch (sinfo->si_signo) {
+	 case SIGSEGV: { fprintf(stderr, " SIGSEGV\n"); break; }
+	 case SIGABRT: { fprintf(stderr, " SIGABRT\n"); break; }
+	 case SIGBUS: { fprintf(stderr,  " SIGBUS\n"); break; }
+	 case SIGKILL: { fprintf(stderr, " SIGKILL\n"); break; }
+	 case SIGINT: { fprintf(stderr,  " SIGINT\n"); break; }
+	 default: { fprintf(stderr, " Unknown signal number %d\n", sinfo->si_signo); break; }
+	}
+
+	fprintf(stderr, "si_code = %d, Killer pid = %d", sinfo->si_code, sinfo->si_pid);
+	if (SIGSEGV == sinfo->si_signo) {
+		fprintf(stderr, ", si_faulty = %p\n", sinfo->si_addr);
+	} else {
+		fprintf(stderr, "\n");
+	}
+
 }
 
 int elf_read_note_section(Elf_ctxt *elf)
@@ -192,11 +214,14 @@ int elf_read_note_section(Elf_ctxt *elf)
 						  continue;
           elf64_prpsinfo_t *prpsinfo = (elf64_prpsinfo_t *)v;
 					print_prpsinfo(prpsinfo);
-					fprintf(stderr, "%s: NT_PRPSINFO\n", name);
 					break;
 				}
 			  case NT_SIGINFO: {
-					fprintf(stderr, "%s: NT_SIGINFO\n", name);
+					if (sizeof(siginfo_t) != n->n_descsz)
+						 continue;
+					siginfo_t *sinfo = (siginfo_t *)v;
+					fprintf(stderr, "\n%s: NT_SIGINFO\n", name);
+					print_sinfo(sinfo);
 					break;
 				}
 				case NT_FILE: {
