@@ -5,6 +5,7 @@ An utility to dissect the NOTE sections in the linux core file.
 
 Example output:
 ----------------
+```
 localhost:~/elf]$ ./readelf
 Elf type: ELF 64-bit LSB core file x86-64
 Program terminated with Signal SIGSEGV, Segmentation fault.
@@ -41,5 +42,4 @@ State: 0, Nice Value: 0
 CORE: NT_SIGINFO
 Signal:  SIGSEGV
 errno=0, si_code=1, Killer pid=0, si_faulty = (nil)
---------------------------------------------------------------
-
+```
