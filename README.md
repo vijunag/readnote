@@ -1,12 +1,12 @@
-# readelf
+# readnote
 
-An utility to dissect the NOTE sections in the linux core file.
+A Linux utility to dissect the NOTE sections in the linux core files.
 ==================================================================
 
 Example output:
 ----------------
 ```
-localhost:~/elf]$ ./readelf
+localhost:~/elf]$ ./readnote -c test/core
 Elf type: ELF 64-bit LSB core file x86-64
 Program terminated with Signal SIGSEGV, Segmentation fault.
 CORE:           NT_PRSTATUS
