@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <assert.h>
+#include <getopt.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -243,14 +244,92 @@ int elf_read_note_section(Elf_ctxt *elf)
 	 }
 }
 
-int main()
+static const char *optString ="c:e:hv";
+static const struct option longOpts[] = {
+  {"core", required_argument, NULL, 0 },
+  {"exe", required_argument, NULL, 0 },
+  {"help", no_argument, NULL, 0 },
+  {"version", no_argument, NULL, 0 },
+  { NULL, no_argument, NULL, 0}
+};
+
+static void print_usage(void)
+{
+  printf("readnote utility\n");
+  printf("Allowed options: \n");
+  printf("-h [ --help ]                            Display this message\n");
+  printf("-c [ --core ]                            Core file name\n");
+  printf("-e [ --exe ]                             Exe file name\n");
+  printf("-v [ --version ]                         Display version information\n");
+}
+
+int main(int argc, char **argv)
 {
 	Elf_ctxt elf = {0};
-	const char *filename = "test/core";
+#ifndef MAX_FILENAME
+#define MAX_FILENAME 256
+#endif
+	char filename[MAX_FILENAME], core[MAX_FILENAME];
 	struct stat st;
+  int opt = -1, longIndex;
+  int retval = -1;
+
+	memset((void *)filename, 0, sizeof(filename));
+	memset((void *)core, 0, sizeof(core));
+
+  opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
+  while (-1 != opt) {
+    switch(opt) {
+     case 'h':
+       print_usage();
+       exit(0);
+       break;
+     case 'v':
+       fprintf(stderr, "readnote Version 1.0 [20th Jan 2016]\n");
+       exit(0);
+     case 'c':
+       strncpy(core, optarg, sizeof(core));
+       core[MAX_FILENAME] = 0;
+       break;
+     case 'e':
+       strncpy(filename, optarg, sizeof(filename));
+       filename[MAX_FILENAME] = 0;
+       break;
+     case '?':
+       print_usage();
+       exit(0);
+       break;
+     case 0:
+       if (!strcmp("core", longOpts[longIndex].name)) {
+         strncpy(core, optarg, sizeof(core));
+         core[MAX_FILENAME] = 0;
+       } else if (!strcmp("file-name", longOpts[longIndex].name)) {
+         strncpy(filename, optarg, sizeof(filename));
+         filename[MAX_FILENAME] = 0;
+       } else if (!strcmp("version", longOpts[longIndex].name)) {
+         fprintf(stderr, "readnote Version 1.0 [20th Jan 2016]\n");
+         exit(0);
+       } else if (!strcmp("help", longOpts[longIndex].name)) {
+         print_usage();
+         exit(0);
+       }
+       break;
+     default:
+       print_usage();
+       exit(0);
+       break;
+    }
+    opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
+  }
+
+	if (!*core)  {
+		LOG_MSG("--core argument is a mandatory argument\n");
+		print_usage();
+		exit(-1);
+	}
 
 	/* open the core file */
-	int fd = SYSCALL_EXIT_ON_ERR(open(filename, O_RDONLY));
+	int fd = SYSCALL_EXIT_ON_ERR(open(core, O_RDONLY));
 
 	SYSCALL_EXIT_ON_ERR(fstat(fd, &st));
 
