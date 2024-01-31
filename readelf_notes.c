@@ -19,7 +19,9 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef __FreeBSD__
 #include <bits/siginfo.h>
+#endif /*__FreeBSD__*/
 #include "readelf.h"
 
 #define SYSCALL_EXIT_ON_ERR(syscall)                          \
@@ -55,6 +57,12 @@ typedef struct Elf_ctxt {
 	void *mmap_addr;
 	uint8_t is32; /* is it 32 bit elf ? */
 } Elf_ctxt;
+
+typedef struct elf_nt_file {
+    unsigned long start;
+    unsigned long end;
+    unsigned long file_ofs;
+} elf_nt_file_t;
 
 static void* Elf_find_phdr_by_type(Elf_ctxt *elf, int type, int idx)
 {
@@ -173,6 +181,41 @@ static void print_sinfo(siginfo_t *sinfo)
 	}
 }
 
+/*
+ * Format of the core file
+ * COUNT - Count of mapped files
+ * page_sz - Page size of the mappings
+ * array of elf_nt_file_t[...COUNT]
+ * array of strs[...COUNT] - strs[i] - name of the mapped file
+ */
+static int print_nt_file_section(char *elf_data)
+{
+    elf_nt_file_t *et_note = NULL;
+    unsigned long count, page_size;
+    char *v = elf_data;
+    int i=0;
+
+    count = *(unsigned long*)v;
+    v+= sizeof(unsigned long);
+
+    page_size = *(unsigned long*)v;
+    v+= sizeof(unsigned long);
+
+    printf("Number of files mapped: %ld\n", count);
+    printf("Page_sz : %ld\n", page_size);
+
+    et_note = v;
+    for(i=0; i < count; ++i, v+=sizeof(*et_note)) {
+        printf("start:0x%lx, end:0x%lx, file_offset:0x%lx\n",
+                et_note[i].start, et_note[i].end, et_note[i].file_ofs);
+    }
+
+    for(i=0; i < count; ++i) {
+        printf("%s\n", v);
+        while(*v != 0) v++;
+    }
+}
+
 int elf_read_note_section(Elf_ctxt *elf)
 {
 	 char *v = NULL;
@@ -224,6 +267,7 @@ int elf_read_note_section(Elf_ctxt *elf)
 				}
 				case NT_FILE: {
 					fprintf(stderr, "\n%s: NT_FILE\n", name);
+					print_nt_file_section(v);
 					break;
 				}
 				case NT_FPREGSET: {
